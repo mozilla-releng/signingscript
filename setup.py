@@ -1,8 +1,14 @@
 import os
 from setuptools import setup, find_packages
 
-with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), "version.txt")) as f:
+project_dir = os.path.abspath(os.path.dirname(__file__))
+
+with open(os.path.join(project_dir, 'version.txt')) as f:
     version = f.read().rstrip()
+
+# We allow commented lines in this file
+with open(os.path.join(project_dir, 'requirements.txt')) as f:
+    requirements = [line.split()[0] for line in f if not line.startswith('#')]
 
 setup(
     name="signingscript",
@@ -21,11 +27,5 @@ setup(
         ],
     },
     license="MPL2",
-    install_requires=[
-        "arrow",
-        "python-jose",
-        "scriptworker",
-        "signtool",
-        "taskcluster",
-    ],
+    install_requires=requirements,
 )
