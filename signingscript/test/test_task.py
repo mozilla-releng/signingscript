@@ -9,6 +9,7 @@ from signingscript.exceptions import FailedSubprocess, SigningServerError, TaskV
 from signingscript.script import get_default_config
 from signingscript.utils import load_signing_server_config, mkdir, SigningServer
 import signingscript.task as stask
+import signingscript.utils as utils
 from signingscript.test import event_loop, noop_async, noop_sync, tmpdir
 
 assert event_loop or tmpdir  # silence flake8
@@ -165,7 +166,7 @@ async def test_sign_file(context, mocker, format, signtool, event_loop):
 
     context.config['signtool'] = signtool
     mocker.patch.object(stask, '_execute_post_signing_steps', new=noop_async)
-    mocker.patch.object(stask, '_execute_subprocess', new=test_cmdln)
+    mocker.patch.object(utils, '_execute_subprocess', new=test_cmdln)
     await stask.sign_file(context, path, TEST_CERT_TYPE, [format], context.config['ssl_cert'])
 
 
@@ -211,22 +212,10 @@ async def test_zip_align_apk(context, monkeypatch, is_verbose):
     def shutil_mock(_, destination):
         assert destination == abs_to
 
-    monkeypatch.setattr('signingscript.task._execute_subprocess', execute_subprocess_mock)
+    monkeypatch.setattr('signingscript.utils._execute_subprocess', execute_subprocess_mock)
     monkeypatch.setattr('shutil.move', shutil_mock)
 
     await stask._zip_align_apk(context, abs_to)
-
-
-# _execute_subprocess {{{1
-@pytest.mark.asyncio
-@pytest.mark.parametrize('exit_code', (1, 0))
-async def test_execute_subprocess(exit_code):
-    command = ['bash', '-c', 'exit  {}'.format(exit_code)]
-    if exit_code != 0:
-        with pytest.raises(FailedSubprocess):
-            await stask._execute_subprocess(command)
-    else:
-        await stask._execute_subprocess(command)
 
 
 # detached_sigfiles {{{1

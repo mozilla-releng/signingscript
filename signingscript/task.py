@@ -1,7 +1,5 @@
 """Signingscript task functions."""
 import aiohttp
-import asyncio
-from asyncio.subprocess import PIPE, STDOUT
 import json
 import logging
 import os
@@ -15,7 +13,7 @@ from scriptworker.exceptions import ScriptWorkerException
 from scriptworker.utils import retry_request
 
 from signingscript import utils
-from signingscript.exceptions import SigningServerError, TaskVerificationError, FailedSubprocess
+from signingscript.exceptions import SigningServerError, TaskVerificationError
 
 log = logging.getLogger(__name__)
 
@@ -157,7 +155,7 @@ async def sign_file(context, from_, cert_type, signing_formats, cert, to=None):
     for f in signing_formats:
         signing_command.extend(["-f", f])
     signing_command.extend(["-o", to, from_])
-    await _execute_subprocess(signing_command)
+    await utils._execute_subprocess(signing_command)
     log.info('Finished signing. Starting post-signing steps...')
     await _execute_post_signing_steps(context, to)
 
@@ -190,22 +188,10 @@ async def _zip_align_apk(context, abs_to):
             zipalign_command += ['-v']
 
         zipalign_command += [_ZIP_ALIGNMENT, original_apk_location, temp_apk_location]
-        await _execute_subprocess(zipalign_command)
+        await utils._execute_subprocess(zipalign_command)
         shutil.move(temp_apk_location, abs_to)
 
     log.info('"{}" has been zip aligned'.format(abs_to))
-
-
-async def _execute_subprocess(command):
-    log.info('Running "{}"'.format(' '.join(command)))
-    subprocess = await asyncio.create_subprocess_exec(*command, stdout=PIPE, stderr=STDOUT)
-    log.info("COMMAND OUTPUT: ")
-    await utils.log_output(subprocess.stdout)
-    exitcode = await subprocess.wait()
-    log.info("exitcode {}".format(exitcode))
-
-    if exitcode != 0:
-        raise FailedSubprocess('Command `{}` failed'.format(' '.join(command)))
 
 
 def detached_sigfiles(filepath, signing_formats):
