@@ -1,4 +1,5 @@
 import aiohttp
+from contextlib import contextmanager
 import os
 import pytest
 
@@ -170,6 +171,18 @@ async def test_sign_file(context, mocker, format, signtool, event_loop):
     await stask.sign_file(context, path, TEST_CERT_TYPE, [format], context.config['ssl_cert'])
 
 
+# _execute_pre_signing_steps {{{1
+@pytest.mark.asyncio
+@pytest.mark.parametrize('filename,expected', ((
+    'foo.dmg', 'foo.tar.gz',
+), (
+    'bar.zip', 'bar.zip',
+)))
+async def test_execute_pre_signing_steps(context, mocker, filename, expected):
+    mocker.patch.object(stask, '_explode_dmg', new=noop_async)
+    assert await stask._execute_pre_signing_steps(context, filename) == expected
+
+
 # _execute_post_signing_steps {{{1
 @pytest.mark.asyncio
 @pytest.mark.parametrize('suffix', ('apk', 'zip'))
@@ -216,6 +229,31 @@ async def test_zip_align_apk(context, monkeypatch, is_verbose):
     monkeypatch.setattr('shutil.move', shutil_mock)
 
     await stask._zip_align_apk(context, abs_to)
+
+
+# _explode_dmg {{{1
+@pytest.mark.asyncio
+async def test_explode_dmg(context, monkeypatch):
+    dmg_path = 'path/to/foo.dmg'
+    abs_dmg_path = os.path.join(context.config['work_dir'], dmg_path)
+    tarball_path = 'path/to/foo.tar.gz'
+    abs_tarball_path = os.path.join(context.config['work_dir'], tarball_path)
+
+    async def execute_subprocess_mock(command, **kwargs):
+        assert command in (
+            ['dmg', 'extract', abs_dmg_path, 'tmp.hfs'],
+            ['hfsplus', 'tmp.hfs', 'extractall', '/', 'tmpdir/app'],
+            ['tar', 'czvf', abs_tarball_path, '.'],
+        )
+
+    @contextmanager
+    def fake_tmpdir():
+        yield "tmpdir"
+
+    monkeypatch.setattr('signingscript.utils._execute_subprocess', execute_subprocess_mock)
+    monkeypatch.setattr('tempfile.TemporaryDirectory', fake_tmpdir)
+
+    await stask._explode_dmg(context, dmg_path)
 
 
 # detached_sigfiles {{{1

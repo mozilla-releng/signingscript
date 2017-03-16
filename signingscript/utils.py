@@ -142,9 +142,11 @@ def copy_to_dir(source, parent_dir, target=None):
         raise SigningServerError("Can't copy {} to {}!".format(source, target_path))
 
 
-async def _execute_subprocess(command):
+async def _execute_subprocess(command, **kwargs):
     log.info('Running "{}"'.format(' '.join(command)))
-    subprocess = await asyncio.create_subprocess_exec(*command, stdout=PIPE, stderr=STDOUT)
+    subprocess = await asyncio.create_subprocess_exec(
+        *command, stdout=PIPE, stderr=STDOUT, **kwargs
+    )
     log.info("COMMAND OUTPUT: ")
     await log_output(subprocess.stdout)
     exitcode = await subprocess.wait()
