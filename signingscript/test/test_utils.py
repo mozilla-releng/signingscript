@@ -146,4 +146,4 @@ async def test_execute_subprocess(exit_code):
         with pytest.raises(FailedSubprocess):
             await utils._execute_subprocess(command)
     else:
-        await utils._execute_subprocess(command)
+        await utils._execute_subprocess(command, cwd="/tmp")

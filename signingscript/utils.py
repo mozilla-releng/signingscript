@@ -143,7 +143,10 @@ def copy_to_dir(source, parent_dir, target=None):
 
 
 async def _execute_subprocess(command, **kwargs):
-    log.info('Running "{}"'.format(' '.join(command)))
+    message = 'Running "{}"'.format(' '.join(command))
+    if 'cwd' in kwargs:
+        message += " in {}".format(kwargs['cwd'])
+    log.info(message)
     subprocess = await asyncio.create_subprocess_exec(
         *command, stdout=PIPE, stderr=STDOUT, **kwargs
     )
