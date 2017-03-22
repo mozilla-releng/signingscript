@@ -59,7 +59,9 @@ async def async_main(context):
             context.config["ssl_cert"]
         )
         sigfiles = detached_sigfiles(path, path_dict['formats'])
-        copy_to_dir(source, context.config['artifact_dir'], target=path)
+        copy_to_dir(
+            os.path.join(work_dir, source), context.config['artifact_dir'], target=source
+        )
         for sigpath in sigfiles:
             copy_to_dir(os.path.join(work_dir, sigpath), context.config['artifact_dir'], target=sigpath)
     log.info("Done!")
