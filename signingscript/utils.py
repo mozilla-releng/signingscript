@@ -1,4 +1,6 @@
 """Signingscript general utility functions."""
+import asyncio
+from asyncio.subprocess import PIPE, STDOUT
 import functools
 import hashlib
 import json
@@ -8,7 +10,7 @@ from shutil import copyfile
 import traceback
 from collections import namedtuple
 
-from signingscript.exceptions import SigningServerError
+from signingscript.exceptions import FailedSubprocess, SigningServerError
 
 log = logging.getLogger(__name__)
 # Mapping between signing client formats and file extensions
@@ -138,3 +140,20 @@ def copy_to_dir(source, parent_dir, target=None):
     except (IOError, OSError):
         traceback.print_exc()
         raise SigningServerError("Can't copy {} to {}!".format(source, target_path))
+
+
+async def _execute_subprocess(command, **kwargs):
+    message = 'Running "{}"'.format(' '.join(command))
+    if 'cwd' in kwargs:
+        message += " in {}".format(kwargs['cwd'])
+    log.info(message)
+    subprocess = await asyncio.create_subprocess_exec(
+        *command, stdout=PIPE, stderr=STDOUT, **kwargs
+    )
+    log.info("COMMAND OUTPUT: ")
+    await log_output(subprocess.stdout)
+    exitcode = await subprocess.wait()
+    log.info("exitcode {}".format(exitcode))
+
+    if exitcode != 0:
+        raise FailedSubprocess('Command `{}` failed'.format(' '.join(command)))
