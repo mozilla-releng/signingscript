@@ -137,6 +137,8 @@ def copy_to_dir(source, parent_dir, target=None):
             log.info("Copying %s to %s" % (source, target_path))
             copyfile(source, target_path)
             return target_path
+        else:
+            log.info("Not copying %s to itself" % (source))
     except (IOError, OSError):
         traceback.print_exc()
         raise SigningServerError("Can't copy {} to {}!".format(source, target_path))
