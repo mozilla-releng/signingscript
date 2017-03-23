@@ -179,7 +179,7 @@ async def test_sign_file(context, mocker, format, signtool, event_loop):
     'bar.zip', 'bar.zip',
 )))
 async def test_execute_pre_signing_steps(context, mocker, filename, expected):
-    mocker.patch.object(stask, '_explode_dmg', new=noop_async)
+    mocker.patch.object(stask, '_convert_dmg_to_tar_gz', new=noop_async)
     assert await stask._execute_pre_signing_steps(context, filename) == expected
 
 
@@ -231,9 +231,9 @@ async def test_zip_align_apk(context, monkeypatch, is_verbose):
     await stask._zip_align_apk(context, abs_to)
 
 
-# _explode_dmg {{{1
+# _convert_dmg_to_tar_gz {{{1
 @pytest.mark.asyncio
-async def test_explode_dmg(context, monkeypatch):
+async def test_convert_dmg_to_tar_gz(context, monkeypatch):
     dmg_path = 'path/to/foo.dmg'
     abs_dmg_path = os.path.join(context.config['work_dir'], dmg_path)
     tarball_path = 'path/to/foo.tar.gz'
@@ -253,7 +253,7 @@ async def test_explode_dmg(context, monkeypatch):
     monkeypatch.setattr('signingscript.utils._execute_subprocess', execute_subprocess_mock)
     monkeypatch.setattr('tempfile.TemporaryDirectory', fake_tmpdir)
 
-    await stask._explode_dmg(context, dmg_path)
+    await stask._convert_dmg_to_tar_gz(context, dmg_path)
 
 
 # detached_sigfiles {{{1

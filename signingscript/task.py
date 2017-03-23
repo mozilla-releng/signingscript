@@ -173,7 +173,7 @@ async def sign_file(context, from_, cert_type, signing_formats, cert, to=None):
 async def _execute_pre_signing_steps(context, from_):
     file_base, file_extension = os.path.splitext(from_)
     if file_extension == '.dmg':
-        await _explode_dmg(context, from_)
+        await _convert_dmg_to_tar_gz(context, from_)
         from_ = "{}.tar.gz".format(file_base)
 
     return from_
@@ -215,12 +215,13 @@ async def _zip_align_apk(context, abs_to):
     log.info('"{}" has been zip aligned'.format(abs_to))
 
 
-# _explode_dmg {{{1
-async def _explode_dmg(context, from_):
+# _convert_dmg_to_tar_gz {{{1
+async def _convert_dmg_to_tar_gz(context, from_):
     """Explode a dmg and tar up its contents. Return the relative tarball path."""
     work_dir = context.config['work_dir']
     abs_from = os.path.join(work_dir, from_)
-    to = re.sub(r'''\.dmg$''', '.tar.gz', from_, flags=re.I)
+    # replace .dmg suffix with .tar.gz (case insensitive)
+    to = re.sub('\.dmg$', '.tar.gz', from_, flags=re.I)
     abs_to = os.path.join(work_dir, to)
     dmg_executable_location = context.config['dmg']
     hfsplus_executable_location = context.config['hfsplus']
