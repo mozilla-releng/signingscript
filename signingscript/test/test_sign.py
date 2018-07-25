@@ -84,8 +84,6 @@ async def helper_archive(context, filename, create_fn, extract_fn, *kwargs):
         target_path = os.path.join(tmpdir, os.path.relpath(path, BASE_DIR))
         assert os.path.exists(target_path)
         assert os.path.isfile(target_path)
-        assert os.stat(target_path).st_uid == 0
-        assert os.stat(target_path).st_gid == 0
         hash1 = get_hash(path)
         hash2 = get_hash(target_path)
         assert hash1 == hash2
