@@ -2,4 +2,4 @@ arrow
 python-jose
 scriptworker
 signtool>=3.1.6
-taskcluster<=4.0.0
+taskcluster<4.0.0
