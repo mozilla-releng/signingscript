@@ -12,11 +12,11 @@ import tarfile
 import tempfile
 import zipfile
 
-from scriptworker.utils import makedirs, raise_future_exceptions, rm
+from scriptworker.utils import makedirs, raise_future_exceptions, rm, get_single_item_from_sequence
 
 from signingscript import utils
 from signingscript.createprecomplete import generate_precomplete
-from signingscript.exceptions import SigningScriptError, TaskVerificationError
+from signingscript.exceptions import SigningScriptError
 
 log = logging.getLogger(__name__)
 
@@ -45,28 +45,6 @@ _WIDEVINE_NONBLESSED_FILENAMES = (
 )
 
 
-# task_cert_type {{{1
-def task_cert_type(task):
-    """Extract task certificate type.
-
-    Args:
-        task (dict): the task definition.
-
-    Raises:
-        TaskVerificationError: if the number of cert scopes is not 1.
-
-    Returns:
-        str: the cert type.
-
-    """
-    certs = [s for s in task["scopes"] if
-             s.startswith("project:releng:signing:cert:")]
-    log.info("Certificate types: %s", certs)
-    if len(certs) != 1:
-        raise TaskVerificationError("Only one certificate type can be used")
-    return certs[0]
-
-
 # get_suitable_signing_servers {{{1
 def get_suitable_signing_servers(signing_servers, cert_type, signing_formats):
     """Get the list of signing servers for given `signing_formats` and `cert_type`.
@@ -90,7 +68,7 @@ def build_signtool_cmd(context, from_, fmt, to=None):
     """Generate a signtool command to run.
 
     Args:
-        context (SigningContext): the signing context
+        context (Context): the signing context
         from_ (str): the source file to sign
         fmt (str): the format to sign with
         to (str, optional): the target path to sign to. If None, overwrite
@@ -104,7 +82,8 @@ def build_signtool_cmd(context, from_, fmt, to=None):
     work_dir = context.config['work_dir']
     token = os.path.join(work_dir, "token")
     nonce = os.path.join(work_dir, "nonce")
-    cert_type = task_cert_type(context.task)
+    from signingscript.task import task_cert_type
+    cert_type = task_cert_type(context)
     ssl_cert = context.config['ssl_cert']
     signtool = context.config['signtool']
     if not isinstance(signtool, (list, tuple)):
@@ -124,7 +103,7 @@ async def sign_file(context, from_, fmt, to=None):
     """Send the file to signtool to be signed.
 
     Args:
-        context (SigningContext): the signing context
+        context (Context): the signing context
         from_ (str): the source file to sign
         fmt (str): the format to sign with
         to (str, optional): the target path to sign to. If None, overwrite
@@ -150,7 +129,7 @@ async def sign_gpg(context, from_, fmt):
     Because this function returns a list, gpg must be the final signing format.
 
     Args:
-        context (SigningContext): the signing context
+        context (Context): the signing context
         from_ (str): the source file to sign
         fmt (str): the format to sign with
 
@@ -168,7 +147,7 @@ async def sign_jar(context, from_, fmt):
     """Sign an apk, and zipalign.
 
     Args:
-        context (SigningContext): the signing context
+        context (Context): the signing context
         from_ (str): the source file to sign
         fmt (str): the format to sign with
 
@@ -188,7 +167,7 @@ async def sign_macapp(context, from_, fmt):
     If given a dmg, convert to a tar.gz file first, then sign the internals.
 
     Args:
-        context (SigningContext): the signing context
+        context (Context): the signing context
         from_ (str): the source file to sign
         fmt (str): the format to sign with
 
@@ -212,7 +191,7 @@ async def sign_signcode(context, orig_path, fmt):
     patterns (see `_should_sign_windows`). Then recreate the zip.
 
     Args:
-        context (SigningContext): the signing context
+        context (Context): the signing context
         orig_path (str): the source file to sign
         fmt (str): the format to sign with
 
@@ -246,7 +225,7 @@ async def sign_widevine(context, orig_path, fmt):
     """Call the appropriate helper function to do widevine signing.
 
     Args:
-        context (SigningContext): the signing context
+        context (Context): the signing context
         orig_path (str): the source file to sign
         fmt (str): the format to sign with
 
@@ -285,7 +264,7 @@ async def sign_widevine_zip(context, orig_path, fmt):
     Then append the sigfiles to the zipfile.
 
     Args:
-        context (SigningContext): the signing context
+        context (Context): the signing context
         orig_path (str): the source file to sign
         fmt (str): the format to sign with
 
@@ -338,7 +317,7 @@ async def sign_widevine_tar(context, orig_path, fmt):
     but that's not possible with compressed tarballs.
 
     Args:
-        context (SigningContext): the signing context
+        context (Context): the signing context
         orig_path (str): the source file to sign
         fmt (str): the format to sign with
 
@@ -464,11 +443,13 @@ def _run_generate_precomplete(context, tmp_dir):
 # _ensure_one_precomplete {{{1
 def _ensure_one_precomplete(tmp_dir, adj):
     """Ensure we only have one `precomplete` file in `tmp_dir`."""
-    matches = [f for f in glob.glob(os.path.join(tmp_dir, '**', 'precomplete'),
-               recursive=True)]
-    if len(matches) != 1:
-        raise SigningScriptError("We should have exactly 1 `precomplete` file {} generating precomplete: {}!".format(adj, matches))
-    return matches[0]
+    return get_single_item_from_sequence(
+        glob.glob(os.path.join(tmp_dir, '**', 'precomplete'), recursive=True),
+        condition=lambda _: True,
+        ErrorClass=SigningScriptError,
+        no_item_error_message='No `precomplete` file found in "{}"'.format(tmp_dir),
+        too_many_item_error_message='More than one `precomplete` file {} in "{}"'.format(adj, tmp_dir),
+    )
 
 
 # remove_extra_files {{{1
@@ -501,7 +482,7 @@ async def zip_align_apk(context, abs_to):
     https://developer.android.com/studio/command-line/zipalign.html
 
     Args:
-        context (SigningContext): the signing context
+        context (Context): the signing context
         abs_to (str): the absolute path to the apk
 
     """
@@ -630,6 +611,16 @@ async def _extract_tarfile(context, from_, compression, tmp_dir=None):
         raise SigningScriptError(e)
 
 
+# _owner_filter {{{1
+def _owner_filter(tarinfo_obj):
+    """Force file ownership to be root, Bug 1473850."""
+    tarinfo_obj.uid = 0
+    tarinfo_obj.gid = 0
+    tarinfo_obj.uname = ''
+    tarinfo_obj.gname = ''
+    return tarinfo_obj
+
+
 # _create_tarfile {{{1
 async def _create_tarfile(context, to, files, compression, tmp_dir=None):
     work_dir = context.config['work_dir']
@@ -640,7 +631,7 @@ async def _create_tarfile(context, to, files, compression, tmp_dir=None):
         with tarfile.open(to, mode='w:{}'.format(compression)) as t:
             for f in files:
                 relpath = os.path.relpath(f, tmp_dir)
-                t.add(f, arcname=relpath)
+                t.add(f, arcname=relpath, filter=_owner_filter)
         return to
     except Exception as e:
         raise SigningScriptError(e)

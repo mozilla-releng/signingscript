@@ -1,57 +1,45 @@
 #!/usr/bin/env python
 """Signing script."""
 import aiohttp
-import asyncio
 import logging
 import os
 import ssl
-import sys
-import traceback
+
+from datadog import statsd
 
 import scriptworker.client
-from scriptworker.context import Context
-from scriptworker.exceptions import ScriptWorkerTaskException
-from signingscript.sign import task_cert_type
 from signingscript.task import build_filelist_dict, get_token, \
-    sign, task_signing_formats, validate_task_schema
-from signingscript.utils import copy_to_dir, load_json, load_signing_server_config
+    sign, task_cert_type, task_signing_formats
+from signingscript.utils import copy_to_dir, load_signing_server_config
 
 
 log = logging.getLogger(__name__)
 
-
-# SigningContext {{{1
-class SigningContext(Context):
-    """Status and configuration object."""
-
-    signing_servers = None
-
-    def __init__(self):
-        """Initialize SigningContext."""
-        super(SigningContext, self).__init__()
-
-    def write_json(self, *args):
-        """Stub out the `write_json` method."""
-        pass
+# Common prefix for all metric names produced from this scriptworker.
+statsd.namespace = 'releng.scriptworker.signing'
 
 
 # async_main {{{1
-async def async_main(context, conn=None):
+async def async_main(context):
     """Sign all the things.
 
     Args:
-        context (SigningContext): the signing context.
+        context (Context): the signing context.
 
     """
-    async with aiohttp.ClientSession(connector=conn) as session:
+    connector = _craft_aiohttp_connector(context)
+
+    async with aiohttp.ClientSession(connector=connector) as session:
         context.session = session
         work_dir = context.config['work_dir']
-        context.task = scriptworker.client.get_task(context.config)
-        log.info("validating task")
-        validate_task_schema(context)
         context.signing_servers = load_signing_server_config(context)
-        cert_type = task_cert_type(context.task)
-        all_signing_formats = task_signing_formats(context.task)
+        cert_type = task_cert_type(context)
+        all_signing_formats = task_signing_formats(context)
+        if 'gpg' in all_signing_formats:
+            if not context.config.get('gpg_pubkey'):
+                raise Exception("GPG format is enabled but gpg_pubkey is not defined")
+            if not os.path.exists(context.config['gpg_pubkey']):
+                raise Exception("gpg_pubkey ({}) doesn't exist!".format(context.config['gpg_pubkey']))
         log.info("getting token")
         await get_token(context, os.path.join(work_dir, 'token'), cert_type, all_signing_formats)
         filelist_dict = build_filelist_dict(context, all_signing_formats)
@@ -66,10 +54,21 @@ async def async_main(context, conn=None):
                 copy_to_dir(
                     os.path.join(work_dir, source), context.config['artifact_dir'], target=source
                 )
+            if 'gpg' in path_dict['formats']:
+                copy_to_dir(
+                    context.config['gpg_pubkey'], context.config['artifact_dir'], target="public/build/KEY"
+                )
     log.info("Done!")
 
 
-# config {{{1
+def _craft_aiohttp_connector(context):
+    kwargs = {}
+    if context.config.get('ssl_cert'):
+        sslcontext = ssl.create_default_context(cafile=context.config['ssl_cert'])
+        kwargs['ssl_context'] = sslcontext
+    return aiohttp.TCPConnector(**kwargs)
+
+
 def get_default_config(base_dir=None):
     """Create the default config to work from.
 
@@ -95,52 +94,14 @@ def get_default_config(base_dir=None):
         'zipalign': 'zipalign',
         'dmg': 'dmg',
         'hfsplus': 'hfsplus',
+        'gpg_pubkey': None,
     }
     return default_config
 
 
-# main {{{1
-def usage():
-    """Print usage and die."""
-    print("Usage: {} CONFIG_FILE".format(sys.argv[0]), file=sys.stderr)
-    sys.exit(1)
-
-
-def main(config_path=None):
-    """Create the context, logging, and pass off execution to `async_main`.
-
-    Args:
-        config_path (str, optional): the path to the config file.  If `None`, use
-            `sys.argv[1]`.  Defaults to None.
-
-    """
-    context = SigningContext()
-    context.config = get_default_config()
-    if config_path is None:
-        if len(sys.argv) != 2:
-            usage()
-        config_path = sys.argv[1]
-    context.config.update(load_json(path=config_path))
-    if context.config.get('verbose'):
-        log_level = logging.DEBUG
-    else:
-        log_level = logging.INFO
-    logging.basicConfig(
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        level=log_level
-    )
-    logging.getLogger("taskcluster").setLevel(logging.WARNING)
-    loop = asyncio.get_event_loop()
-    kwargs = {}
-    if context.config.get('ssl_cert'):
-        sslcontext = ssl.create_default_context(cafile=context.config['ssl_cert'])
-        kwargs['ssl_context'] = sslcontext
-    conn = aiohttp.TCPConnector(**kwargs)
-    try:
-        loop.run_until_complete(async_main(context, conn=conn))
-    except ScriptWorkerTaskException as exc:
-        traceback.print_exc()
-        sys.exit(exc.exit_code)
+def main():
+    """Start signing script."""
+    return scriptworker.client.sync_main(async_main, default_config=get_default_config())
 
 
 __name__ == '__main__' and main()

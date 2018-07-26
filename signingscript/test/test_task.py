@@ -2,10 +2,11 @@ import aiohttp
 import os
 import pytest
 
+from scriptworker.client import validate_task_schema
 from scriptworker.context import Context
-from scriptworker.exceptions import ScriptWorkerTaskException
+from scriptworker.exceptions import ScriptWorkerTaskException, TaskVerificationError
 
-from signingscript.exceptions import SigningServerError, TaskVerificationError
+from signingscript.exceptions import SigningServerError
 from signingscript.script import get_default_config
 from signingscript.utils import load_signing_server_config, mkdir
 import signingscript.task as stask
@@ -16,7 +17,8 @@ assert tmpdir  # silence flake8
 
 # helper constants, fixtures, functions {{{1
 SERVER_CONFIG_PATH = os.path.join(BASE_DIR, 'example_server_config.json')
-TEST_CERT_TYPE = "project:releng:signing:cert:dep-signing"
+DEFAULT_SCOPE_PREFIX = "project:releng:signing:"
+TEST_CERT_TYPE = "{}cert:dep-signing".format(DEFAULT_SCOPE_PREFIX)
 
 
 @pytest.fixture(scope='function')
@@ -51,16 +53,33 @@ def context(tmpdir):
     context.config['signing_server_config'] = SERVER_CONFIG_PATH
     context.config['work_dir'] = os.path.join(tmpdir, 'work')
     context.config['artifact_dir'] = os.path.join(tmpdir, 'artifact')
+    context.config['taskcluster_scope_prefix'] = DEFAULT_SCOPE_PREFIX
     context.signing_servers = load_signing_server_config(context)
     yield context
 
 
+# task_cert_type {{{1
+def test_task_cert_type(context):
+    context.task = {
+        'scopes': [TEST_CERT_TYPE, "project:releng:signing:type:mar", "project:releng:signing:type:gpg"]
+    }
+    assert TEST_CERT_TYPE == stask.task_cert_type(context)
+
+
+def test_task_cert_type_error(context):
+    context.task = {
+        'scopes': [TEST_CERT_TYPE, 'project:releng:signing:cert:notdep', 'project:releng:signing:type:gpg']
+    }
+    with pytest.raises(ScriptWorkerTaskException):
+        stask.task_cert_type(context)
+
+
 # task_signing_formats {{{1
-def test_task_signing_formats():
-    task = {"scopes": [TEST_CERT_TYPE,
+def test_task_signing_formats(context):
+    context.task = {"scopes": [TEST_CERT_TYPE,
                        "project:releng:signing:format:mar",
                        "project:releng:signing:format:gpg"]}
-    assert ["mar", "gpg"] == stask.task_signing_formats(task)
+    assert ["mar", "gpg"] == stask.task_signing_formats(context)
 
 
 # validate_task_schema {{{1
@@ -69,12 +88,12 @@ def test_missing_mandatory_urls_are_reported(context, task_defn):
     del(context.task['scopes'])
 
     with pytest.raises(ScriptWorkerTaskException):
-        stask.validate_task_schema(context)
+        validate_task_schema(context)
 
 
 def test_no_error_is_reported_when_no_missing_url(context, task_defn):
     context.task = task_defn
-    stask.validate_task_schema(context)
+    validate_task_schema(context)
 
 
 # get_token {{{1
@@ -136,7 +155,7 @@ async def test_sign(context, mocker, format, filename, post_files):
 @pytest.mark.parametrize('formats,raises', ((
     ['gpg'], False,
 ), (
-    ['jar', 'mar', 'gpg'], False,
+    ['jar', 'focus-jar', 'mar', 'gpg'], False,
 ), (
     ['illegal'], True,
 )))

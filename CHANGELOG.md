@@ -2,6 +2,61 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [7.0.2] - 2018-07-23
+### Fixed
+- Removed the old ssl cert, as this caused bustage.
+
+## [7.0.1] - 2018-07-23
+### Changed
+- Updated the set of valid ssl certs
+
+## [7.0.0] - 2018-05-10
+### Added
+- Added aiohttp3 support
+
+### Changed
+- Dropped py35 support; added py37 tests
+- Packaged README.md
+
+### Removed
+- Removed README.rst
+
+## [6.1.0] - 2018-04-24
+### Added
+- Added focus-jar support
+
+## [6.0.1] - 2018-04-04
+### Added
+- Create `KEY` artifact when doing GPG signing
+
+## [6.0.0] - 2018-03-14
+### Changed
+- `script.async_main()` relies on scriptworker (>= 10.2.0) to:
+  - initialize context, config, and task
+  - validate the task schema
+
+### Removed
+- `exceptions.TaskVerificationError` in favor of the one in scriptworker
+- `script.SigningContext`, `script.usage()`, `script.main()` now handled by scriptworker
+- `task.validate_task_schema()` now handled by scriptworker
+
+
+## [5.0.0] - 2018-02-01
+### Added
+- support for different scope prefix (was hardcoded to `project:releng:signing:`). Prefixes are now defined in the configuration under `taskcluster_scope_prefix`.
+- certificates of MDC1 datacenter.
+
+### Changed
+- `task_cert_type()` now lives under the `task` module.
+
+## [4.2.1] - 2017-12-05
+### Added
+- added additional dependency for datadog statsd
+
+## [4.2.0] - 2017-11-30
+### Added
+- added datadog statsd
+
 ## [4.1.2] - 2017-08-30
 ### Added
 - updated `host.cert` for new ssl cert with >30day expiration :)
