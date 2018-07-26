@@ -70,8 +70,18 @@ def context_die(*args, **kwargs):
     raise SigningScriptError("dying")
 
 
-async def assert_file_permissions(archive, compression='gz'):
-    with tarfile.open(archive, mode='r:{}'.format(compression)) as t:
+
+def is_tarfile(archive):
+    try:
+        import tarfile
+        tarfile.open(archive)
+    except tarfile.ReadError:
+        return False
+    return True
+
+
+async def assert_file_permissions(archive):
+    with tarfile.open(archive, mode='r') as t:
         for member in t.getmembers():
             assert member.uid == 0
             assert member.gid == 0
@@ -87,9 +97,8 @@ async def helper_archive(context, filename, create_fn, extract_fn, *args):
         tmp_dir=BASE_DIR
     )
     # Not relevant for zip
-    compression = [c for c in args if c in ['bz2', 'gz']]
-    if '.tar' in archive and compression:
-        await assert_file_permissions(archive, compression=compression[0])
+    if is_tarfile(archive):
+        await assert_file_permissions(archive)
     await extract_fn(context, archive, *args, tmp_dir=tmpdir)
     for path in files:
         target_path = os.path.join(tmpdir, os.path.relpath(path, BASE_DIR))
