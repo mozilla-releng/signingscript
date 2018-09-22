@@ -11,7 +11,7 @@ from signingscript.test import noop_async, noop_sync, read_file, tmpdir, tmpfile
 import signingscript.script as script
 from unittest.mock import MagicMock
 
-assert tmpdir  # silence flake8
+assert tmpdir, tmpfile  # silence flake8
 
 # helper constants, fixtures, functions {{{1
 EXAMPLE_CONFIG = os.path.join(BASE_DIR, 'config_example.json')
@@ -42,19 +42,17 @@ async def async_main_helper(tmpdir, mocker, formats, extra_config={}, server_typ
 
 
 @pytest.mark.asyncio
-async def test_async_main_gpg(tmpdir, mocker):
+async def test_async_main_gpg(tmpdir, mocker, tmpfile):
     formats = ['gpg']
-    fake_gpg_pubkey = tmpfile()
     mocked_copy_to_dir = mocker.Mock()
     mocker.patch.object(script, 'copy_to_dir', new=mocked_copy_to_dir)
 
-    await async_main_helper(tmpdir, mocker, formats, {'gpg_pubkey': fake_gpg_pubkey})
+    await async_main_helper(tmpdir, mocker, formats, {'gpg_pubkey': tmpfile})
     for call in mocked_copy_to_dir.call_args_list:
         if call[1].get('target') == 'public/build/KEY':
             break
     else:
         assert False, "couldn't find copy_to_dir call that created KEY"
-    os.remove(fake_gpg_pubkey)
 
 
 @pytest.mark.asyncio

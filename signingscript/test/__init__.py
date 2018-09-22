@@ -38,10 +38,10 @@ def tmpdir():
 
 @pytest.yield_fixture(scope='function')
 def tmpfile():
-    with tempfile.NamedTemporaryFile(delete=False) as tmp:
+    with tempfile.NamedTemporaryFile(delete=True) as tmp:
         tmp.write(bytes("fake", "utf-8"))
         tmp.flush()
-        return tmp.name
+        yield tmp.name
 
 
 def die(*args, **kwargs):
