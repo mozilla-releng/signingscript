@@ -100,7 +100,7 @@ async def helper_archive(context, filename, create_fn, extract_fn, *args):
 
 # get_suitable_signing_servers {{{1
 @pytest.mark.parametrize('formats,expected', ((
-    ['gpg'], [["127.0.0.1:9110", "user", "pass", ["gpg", "sha2signcode"], "signing_server"]]
+    ['gpg'], [["127.0.0.1:9110", "user", "pass", ["gpg", "sha2signcode"], "signing-server"]]
 ), (
     ['invalid'], []
 )))

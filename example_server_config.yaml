@@ -1,0 +1,16 @@
+project:releng:signing:cert:dep-signing:  # cert scope
+    signing-server:  # server pool nick
+        urls:
+            # signing-server urls don't include https://
+            - 127.0.0.1:9110
+        formats: ["gpg", "sha2signcode"]  # supported signing formats
+        user: user
+        pass: pass
+        server-type: signing-server
+    autograph:  # autograph pool nick
+        urls:
+            - https://127.0.0.1:9110
+        formats: ["autograph_mar384"]
+        user: hawk_user
+        pass: hawk_secret
+        server-type: autograph

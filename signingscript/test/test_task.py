@@ -17,7 +17,7 @@ assert context  # silence flake8
 
 
 # helper constants, fixtures, functions {{{1
-SERVER_CONFIG_PATH = os.path.join(BASE_DIR, 'example_server_config.json')
+SERVER_CONFIG_PATH = os.path.join(BASE_DIR, 'example_server_config.yaml')
 DEFAULT_SCOPE_PREFIX = "project:releng:signing:"
 TEST_CERT_TYPE = "{}cert:dep-signing".format(DEFAULT_SCOPE_PREFIX)
 TEST_AUTOGRAPH_TYPE = "{}autograph:dep-signing".format(DEFAULT_SCOPE_PREFIX)

@@ -1,0 +1,45 @@
+dep:
+  signing-server1:
+    urls:
+        - server1:9000
+    formats: ["f1", "f2"]
+    user: user1
+    pass: pass1
+    server-type: signing-server
+  signing-server2:
+    urls:
+        - server2:8000
+    formats: ["f2", "f3"]
+    user: user2
+    pass: pass2
+    server-type: signing-server
+  autograph:
+    urls:
+        - https://127.0.0.1:9110
+    formats: ["autograph_marsha384"]
+    user: hawk_user
+    pass: hawk_secret
+    server-type: autograph
+notdep:
+  signing-server1:
+    urls:
+      - server1:9100
+    formats: ["f1", "f2"]
+    user: user1
+    pass: pass1
+    server-type: signing-server
+  signing-server2:
+    urls:
+      - server2:8100
+    formats: ["f2", "f3"]
+    user: user2
+    pass: pass2
+    server-type: signing-server
+project:releng:signing:cert:dep-signing:
+  signing-server1:
+    urls:
+      - 127.0.0.1:9110
+    formats: ["gpg", "sha2signcode"]
+    user: user
+    pass: pass
+    server-type: signing-server

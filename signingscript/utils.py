@@ -1,22 +1,23 @@
 """Signingscript general utility functions."""
 import asyncio
 from asyncio.subprocess import PIPE, STDOUT
+from collections import namedtuple
 import functools
 import hashlib
-import json
 import logging
 import os
 from shutil import copyfile
 import traceback
-from collections import namedtuple
+import yaml
 
 from signingscript.exceptions import FailedSubprocess, SigningServerError
 
 log = logging.getLogger(__name__)
 
 
-SigningServer = namedtuple("SigningServer", ["server", "user", "password",
-                                             "formats", "server_type"])
+SigningServer = namedtuple(
+    "SigningServer", ["server", "user", "password", "formats", "server_type"]
+)
 
 
 def mkdir(path):
@@ -52,18 +53,18 @@ def get_hash(path, hash_type="sha512"):
     return h.hexdigest()
 
 
-def load_json(path):
-    """Load json from path.
+def load_yaml(path):
+    """Load yaml from path.
 
     Args:
         path (str): the path to read from
 
     Returns:
-        dict: the loaded json object
+        dict: the loaded yaml object
 
     """
     with open(path, "r") as fh:
-        return json.load(fh)
+        return yaml.safe_load(fh)
 
 
 def load_signing_server_config(context):
@@ -78,12 +79,22 @@ def load_signing_server_config(context):
     """
     path = context.config['signing_server_config']
     log.info("Loading signing server config from {}".format(path))
-    with open(path) as f:
-        raw_cfg = json.load(f)
+    raw_cfg = load_yaml(path)
 
     cfg = {}
-    for signing_type, server_data in raw_cfg.items():
-        cfg[signing_type] = [SigningServer(*s) for s in server_data]
+    for signing_type, pool_data in raw_cfg.items():
+        for pool_nick, server_data in pool_data.items():
+            cfg.setdefault(signing_type, [])
+            for url in server_data['urls']:
+                cfg[signing_type].append(
+                    SigningServer(
+                        server=url,
+                        user=server_data['user'],
+                        password=server_data['pass'],
+                        formats=server_data['formats'],
+                        server_type=server_data['server-type'],
+                    )
+                )
     log.info("Signing server config loaded from {}".format(path))
     return cfg
 

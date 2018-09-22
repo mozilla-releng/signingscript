@@ -1,7 +1,7 @@
-import json
 import mock
 import os
 import pytest
+import yaml
 
 from scriptworker.context import Context
 from signingscript.exceptions import FailedSubprocess, SigningServerError
@@ -14,7 +14,7 @@ assert tmpdir  # silence flake8
 ID_RSA_PUB_HASH = "226658906e46b26ef195c468f94e2be983b6c53f370dff0d8e725832f" + \
     "4645933de4755690a3438760afe8790a91938100b75b5d63e76ebd00920adc8d2a8857e"
 
-SERVER_CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'example_server_config.json')
+SERVER_CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'example_server_config.yaml')
 
 
 # mkdir {{{1
@@ -47,15 +47,15 @@ def test_get_hash():
     assert utils.get_hash(PUB_KEY_PATH, hash_type="sha512") == ID_RSA_PUB_HASH
 
 
-# load_json {{{1
-def test_load_json_from_file(tmpdir):
-    json_object = {'a_key': 'a_value'}
+# load_yaml {{{1
+def test_load_yaml(tmpdir):
+    yaml_object = {'a_key': 'a_value'}
 
-    output_file = os.path.join(tmpdir, 'file.json')
+    output_file = os.path.join(tmpdir, 'file.yaml')
     with open(output_file, 'w') as f:
-        json.dump(json_object, f)
+        yaml.dump(yaml_object, f)
 
-    assert utils.load_json(output_file) == json_object
+    assert utils.load_yaml(output_file) == yaml_object
 
 
 # load_signing_server_config {{{1
@@ -67,7 +67,7 @@ def test_load_signing_server_config():
     cfg = utils.load_signing_server_config(context)
     assert cfg["dep"][0].server == "server1:9000"
     assert cfg["dep"][1].user == "user2"
-    assert cfg["dep"][1].server_type == "signing_server"
+    assert cfg["dep"][1].server_type == "signing-server"
     assert cfg["dep"][2].server_type == "autograph"
     assert cfg["notdep"][0].password == "pass1"
     assert cfg["notdep"][1].formats == ["f2", "f3"]

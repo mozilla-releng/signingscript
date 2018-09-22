@@ -15,7 +15,7 @@ def read_file(path):
 
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-SERVER_CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'example_server_config.json')
+SERVER_CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'example_server_config.yaml')
 DEFAULT_SCOPE_PREFIX = 'project:releng:signing:'
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 PUB_KEY_PATH = os.path.join(TEST_DATA_DIR, "id_rsa.pub")

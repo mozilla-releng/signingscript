@@ -19,7 +19,7 @@ SSL_CERT = os.path.join(BASE_DIR, "signingscript", "data", "host.cert")
 
 
 # async_main {{{1
-async def async_main_helper(tmpdir, mocker, formats, extra_config={}, server_type='signing_server'):
+async def async_main_helper(tmpdir, mocker, formats, extra_config={}, server_type='signing-server'):
 
     def fake_filelist_dict(*args, **kwargs):
         return {'path1': {'full_path': 'full_path1', 'formats': formats}}

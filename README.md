@@ -42,35 +42,76 @@ If you want to use local clones of [signingscript](https://github.com/mozilla-re
 
 in each of the applicable directories after, or instead of the `pip install` command.
 
-### password json
+### password yaml
 
-You'll need a password json file.  The format is
+You'll need a password yaml file.  The format is
 
-    {
-      "BASE_CERT_SCOPE:dep-signing": [
-        ["IPADDRESS:PORT", "USERNAME", "PASSWORD", ["SIGNING_FORMAT1", "SIGNING_FORMAT2"...]],
-        ["SECOND_IPADDRESS:PORT", "USERNAME", "PASSWORD", ["SIGNING_FORMAT1", "SIGNING_FORMAT2"...]],
-        ...
-      ],
-      "BASE_CERT_SCOPE:nightly-signing": [
-        ["IPADDRESS:PORT", "USERNAME", "PASSWORD", ["SIGNING_FORMAT1", "SIGNING_FORMAT2"...]],
-        ["SECOND_IPADDRESS:PORT", "USERNAME", "PASSWORD", ["SIGNING_FORMAT1", "SIGNING_FORMAT2"...]],
-        ...
-      ],
-      "BASE_CERT_SCOPE:release-signing": [
-        ["IPADDRESS:PORT", "USERNAME", "PASSWORD", ["SIGNING_FORMAT1", "SIGNING_FORMAT2"...]],
-        ["SECOND_IPADDRESS:PORT", "USERNAME", "PASSWORD", ["SIGNING_FORMAT1", "SIGNING_FORMAT2"...]],
-        ...
-      ]
-    }
+```yaml
+BASE_CERT_SCOPE:dep-signing:
+  server-pool-nick:
+    urls:
+      - IPADDRESS:PORT
+      - ...
+    formats: ["SIGNING_FORMAT1", "SIGNING_FORMAT2", ...]
+    user: user
+    pass: pass
+    server-type: signing-server
+  autograph-pool-nick:
+    urls:
+      - https://HOST:PORT
+      - ...
+    formats: ["AUTOGRAPH_SIGNING_FORMAT1", "AUTOGRAPH_SIGNING_FORMAT2", ...]
+    user: user
+    pass: pass
+    server-type: autograph
+BASE_CERT_SCOPE:nightly-signing
+  server-pool-nick:
+    urls:
+      - IPADDRESS:PORT
+      - ...
+    formats: ["SIGNING_FORMAT1", "SIGNING_FORMAT2", ...]
+    user: user
+    pass: pass
+    server-type: signing-server
+  autograph-pool-nick:
+    urls:
+      - https://HOST:PORT
+      - ...
+    formats: ["AUTOGRAPH_SIGNING_FORMAT1", "AUTOGRAPH_SIGNING_FORMAT2", ...]
+    user: user
+    pass: pass
+    server-type: autograph
+BASE_CERT_SCOPE:release-signing:
+  server-pool-nick:
+    urls:
+      - IPADDRESS:PORT
+      - ...
+    formats: ["SIGNING_FORMAT1", "SIGNING_FORMAT2", ...]
+    user: user
+    pass: pass
+    server-type: signing-server
+  autograph-pool-nick:
+    urls:
+      - https://HOST:PORT
+      - ...
+    formats: ["AUTOGRAPH_SIGNING_FORMAT1", "AUTOGRAPH_SIGNING_FORMAT2", ...]
+    user: user
+    pass: pass
+    server-type: autograph
+```
 
 This stripped down version will work with docker-signing-server:
 
-    {
-      "project:releng:signing:cert:dep-signing": [
-        ["127.0.0.1:9110", "user", "pass", ["gpg"]]
-      ]
-    }
+```yaml
+project:releng:signing:cert:dep-signing:
+    docker-signing-server:
+        urls:
+            - "127.0.0.1:9110"
+        formats: ["gpg"]
+        user: user
+        user: pass
+        server-type: signing-server
+```
 
 The user/pass for the docker-signing-server are `user` and `pass` for super sekrit security.
 
@@ -81,7 +122,7 @@ The config json looks like this (comments are not valid json, but I'm inserting 
 
     {
       // path to the password json you created above
-      "signing_server_config": "/src/signing/signingscript/example_server_config.json",
+      "signing_server_config": "/src/signing/signingscript/example_server_config.yaml",
 
       // the work directory path.  task.json will live here, as well as downloaded binaries
       // this should be an absolute path.
@@ -174,7 +215,7 @@ The important entries to edit are the `upstreamArtifacts`, the `dependencies`, a
 
 The `upstreamArtifacts` point to the file(s) to sign.  Because scriptworker downloads and verifies their shas, signingscript expects to find the files under `$work_dir/cot/$upstream_task_id/$path`
 
-The first scope, `project:releng:signing:cert:dep-signing`, matches the scope in your password json that you created.  The second scope, `project:releng:signing:format:gpg`, specifies which signing format to use.  (You can specify multiple formats by adding multiple `project:releng:signing:format:` scopes)
+The first scope, `project:releng:signing:cert:dep-signing`, matches the scope in your password yaml that you created.  The second scope, `project:releng:signing:format:gpg`, specifies which signing format to use.  (You can specify multiple formats by adding multiple `project:releng:signing:format:` scopes)
 
 Write this to `task.json` in your `work_dir`.
 
