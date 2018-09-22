@@ -22,6 +22,7 @@ setup(
     },
     license="MPL2",
     install_requires=[
+        "PyYAML",
         "arrow",
         "datadog",
         "mar",
