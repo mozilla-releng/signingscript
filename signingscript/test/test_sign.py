@@ -100,7 +100,7 @@ async def helper_archive(context, filename, create_fn, extract_fn, *args):
 
 # get_suitable_signing_servers {{{1
 @pytest.mark.parametrize('formats,expected', ((
-    ['gpg'], [["127.0.0.1:9110", "user", "pass", ["gpg", "sha2signcode"], "signing-server"]]
+    ['gpg'], [["127.0.0.1:9110", "user", "pass", ["gpg", "sha2signcode"], "signing-server", 1]]
 ), (
     ['invalid'], []
 )))
@@ -179,7 +179,7 @@ async def test_sign_file_autograph(context, mocker, to, expected):
     }
     context.signing_servers = {
         "project:releng:signing:cert:dep-signing": [
-            utils.SigningServer(*["https://autograph-hsm.dev.mozaws.net", "alice", "fs5wgcer9qj819kfptdlp8gm227ewxnzvsuj9ztycsx08hfhzu", ["autograph_mar"], "autograph"])
+            utils.SigningServer(*["https://autograph-hsm.dev.mozaws.net", "alice", "fs5wgcer9qj819kfptdlp8gm227ewxnzvsuj9ztycsx08hfhzu", ["autograph_mar"], "autograph", 1])
         ]
     }
     mocker.patch.object(sign, 'sign_file_with_autograph', new=noop_async)
@@ -210,7 +210,7 @@ async def test_sign_file_with_autograph(context, mocker, to, expected):
     }
     context.signing_servers = {
         "project:releng:signing:cert:dep-signing": [
-            utils.SigningServer(*["https://autograph-hsm.dev.mozaws.net", "alice", "fs5wgcer9qj819kfptdlp8gm227ewxnzvsuj9ztycsx08hfhzu", ["autograph_mar"], "autograph"])
+            utils.SigningServer(*["https://autograph-hsm.dev.mozaws.net", "alice", "fs5wgcer9qj819kfptdlp8gm227ewxnzvsuj9ztycsx08hfhzu", ["autograph_mar"], "autograph", 1])
         ]
     }
     assert await sign.sign_file_with_autograph(context, 'from', 'autograph_mar', to=to) == expected
@@ -282,7 +282,7 @@ async def test_sign_file_with_autograph_raises_http_error(context, mocker, to, e
     }
     context.signing_servers = {
         "project:releng:signing:cert:dep-signing": [
-            utils.SigningServer(*["https://autograph-hsm.dev.mozaws.net", "alice", "fs5wgcer9qj819kfptdlp8gm227ewxnzvsuj9ztycsx08hfhzu", ["autograph_mar"], "autograph"])
+            utils.SigningServer(*["https://autograph-hsm.dev.mozaws.net", "alice", "fs5wgcer9qj819kfptdlp8gm227ewxnzvsuj9ztycsx08hfhzu", ["autograph_mar"], "autograph", 1])
         ]
     }
     with pytest.raises(sign.requests.exceptions.RequestException):

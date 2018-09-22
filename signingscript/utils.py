@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 
 
 SigningServer = namedtuple(
-    "SigningServer", ["server", "user", "password", "formats", "server_type"]
+    "SigningServer", ["server", "user", "password", "formats", "server_type", "priority"]
 )
 
 
@@ -93,6 +93,7 @@ def load_signing_server_config(context):
                         password=server_data['pass'],
                         formats=server_data['formats'],
                         server_type=server_data['server-type'],
+                        priority=server_data['priority'],
                     )
                 )
     log.info("Signing server config loaded from {}".format(path))

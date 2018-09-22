@@ -6,6 +6,7 @@ dep:
     user: user1
     pass: pass1
     server-type: signing-server
+    priority: 2
   signing-server2:
     urls:
         - server2:8000
@@ -13,6 +14,7 @@ dep:
     user: user2
     pass: pass2
     server-type: signing-server
+    priority: 1
   autograph:
     urls:
         - https://127.0.0.1:9110
@@ -20,6 +22,7 @@ dep:
     user: hawk_user
     pass: hawk_secret
     server-type: autograph
+    priority: 1
 notdep:
   signing-server1:
     urls:
@@ -28,6 +31,7 @@ notdep:
     user: user1
     pass: pass1
     server-type: signing-server
+    priority: 2
   signing-server2:
     urls:
       - server2:8100
@@ -35,6 +39,7 @@ notdep:
     user: user2
     pass: pass2
     server-type: signing-server
+    priority: 1
 project:releng:signing:cert:dep-signing:
   signing-server1:
     urls:
@@ -43,3 +48,4 @@ project:releng:signing:cert:dep-signing:
     user: user
     pass: pass
     server-type: signing-server
+    priority: 1
