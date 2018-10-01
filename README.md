@@ -56,6 +56,7 @@ BASE_CERT_SCOPE:dep-signing:
     user: user
     pass: pass
     server-type: signing-server
+    priority: 1
   autograph-pool-nick:
     urls:
       - https://HOST:PORT
@@ -64,6 +65,7 @@ BASE_CERT_SCOPE:dep-signing:
     user: user
     pass: pass
     server-type: autograph
+    priority: 1
 BASE_CERT_SCOPE:nightly-signing
   server-pool-nick:
     urls:
@@ -73,6 +75,7 @@ BASE_CERT_SCOPE:nightly-signing
     user: user
     pass: pass
     server-type: signing-server
+    priority: 1
   autograph-pool-nick:
     urls:
       - https://HOST:PORT
@@ -81,6 +84,7 @@ BASE_CERT_SCOPE:nightly-signing
     user: user
     pass: pass
     server-type: autograph
+    priority: 1
 BASE_CERT_SCOPE:release-signing:
   server-pool-nick:
     urls:
@@ -90,6 +94,7 @@ BASE_CERT_SCOPE:release-signing:
     user: user
     pass: pass
     server-type: signing-server
+    priority: 1
   autograph-pool-nick:
     urls:
       - https://HOST:PORT
@@ -98,6 +103,7 @@ BASE_CERT_SCOPE:release-signing:
     user: user
     pass: pass
     server-type: autograph
+    priority: 1
 ```
 
 This stripped down version will work with docker-signing-server:
@@ -111,6 +117,7 @@ project:releng:signing:cert:dep-signing:
         user: user
         user: pass
         server-type: signing-server
+        priority: 1
 ```
 
 The user/pass for the docker-signing-server are `user` and `pass` for super sekrit security.

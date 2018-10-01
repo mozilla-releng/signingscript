@@ -7,7 +7,8 @@ project:releng:signing:cert:dep-signing:  # cert scope
         user: user
         pass: pass
         server-type: signing-server
-        priority: 1  # larger number means higher priority
+        # a larger number means this pool is higher priority for a given scope/format
+        priority: 1
     autograph:  # autograph pool nick
         urls:
             - https://127.0.0.1:9110
