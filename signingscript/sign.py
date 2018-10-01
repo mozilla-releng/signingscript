@@ -2,6 +2,7 @@
 """Signingscript task functions."""
 import asyncio
 import base64
+from collections import defaultdict
 import difflib
 import fnmatch
 import glob
@@ -9,6 +10,7 @@ import logging
 from mardor.reader import MarReader
 from mardor.writer import add_signature_block
 import os
+import random
 import re
 import requests
 from requests_hawk import HawkAuth
@@ -58,6 +60,18 @@ _WIDEVINE_NONBLESSED_FILENAMES = (
 
 
 # get_suitable_signing_servers {{{1
+def _randomize_signing_server_order(signing_servers):
+    """Randomize the signing server order while maintaining priority."""
+    tmp_dict = defaultdict(list)
+    for server in signing_servers:
+        tmp_dict[server.priority].append(server)
+    sorted_list = []
+    for k in sorted(tmp_dict.keys(), reverse=True):
+        random.shuffle(tmp_dict[k])
+        sorted_list.extend(tmp_dict[k])
+    return sorted_list
+
+
 def get_suitable_signing_servers(signing_servers, cert_type, signing_formats, raise_on_empty_list=False):
     """Get the list of signing servers for given `signing_formats` and `cert_type`.
 
@@ -80,7 +94,9 @@ def get_suitable_signing_servers(signing_servers, cert_type, signing_formats, ra
     if cert_type not in signing_servers:
         suitable_signing_servers = []
     else:
-        suitable_signing_servers = [s for s in signing_servers[cert_type] if set(signing_formats) & set(s.formats)]
+        suitable_signing_servers = _randomize_signing_server_order(
+            [s for s in signing_servers[cert_type] if set(signing_formats) & set(s.formats)]
+        )
 
     if raise_on_empty_list and not suitable_signing_servers:
         raise SigningScriptError(

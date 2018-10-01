@@ -12,7 +12,6 @@ import asyncio
 from frozendict import frozendict
 import logging
 import os
-import random
 
 from datadog import statsd, initialize
 import platform
@@ -153,7 +152,6 @@ async def get_token(context, output_file, cert_type, signing_formats):
         context.signing_servers, cert_type,
         [fmt for fmt in signing_formats if not is_autograph_signing_format(fmt)]
     )
-    random.shuffle(signing_servers)
     for s in signing_servers:
         log.info("getting token from %s", s.server)
         url = "https://{}/token".format(s.server)
