@@ -104,7 +104,7 @@ async def helper_archive(context, filename, create_fn, extract_fn, *args):
 ), (
     ['invalid'], []
 )))
-def test_get_suitable_signing_servers(context, formats, expected):
+def test_single_get_suitable_signing_servers(context, formats, expected):
     expected_servers = []
     for info in expected:
         expected_servers.append(
@@ -120,6 +120,45 @@ def test_get_suitable_signing_servers(context, formats, expected):
 def test_get_suitable_signing_servers_raises_signingscript_error(context):
     with pytest.raises(SigningScriptError):
         sign.get_suitable_signing_servers(context.signing_servers, TEST_CERT_TYPE, signing_formats=['invalid'], raise_on_empty_list=True)
+
+
+@pytest.mark.parametrize('priorities', (
+    {
+        5: 2,
+        1: 6,
+        10: 3,
+    },
+    {
+        1: 7
+    },
+    {}
+))
+def test_prioritized_randomized_get_suitable_signing_servers(context, priorities):
+    context.signing_servers = {TEST_CERT_TYPE: []}
+    expected_dict = {}
+
+    for priority, num in priorities.items():
+        expected_dict[priority] = []
+        for count in range(0, num):
+            server = SigningServer(
+                "{}.{}.server".format(priority, count),
+                "{}.{}.user".format(priority, count),
+                "{}.{}.pass".format(priority, count),
+                ['gpg'], 'signing-server', priority
+            )
+            expected_dict[priority].append(server)
+            context.signing_servers[TEST_CERT_TYPE].append(server)
+
+    server_list = sign.get_suitable_signing_servers(
+        context.signing_servers, TEST_CERT_TYPE, ['gpg']
+    )
+
+    for priority in sorted(expected_dict.keys(), reverse=True):
+        expected_servers = [s.server for s in expected_dict[priority]]
+        L = len(expected_servers)
+        assert set([s.server for s in server_list[0:L]]) == set(expected_servers)
+        server_list = server_list[L:]
+    assert server_list == []
 
 
 # build_signtool_cmd {{{1
