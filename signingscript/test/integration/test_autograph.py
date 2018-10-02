@@ -25,29 +25,32 @@ TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data')
 
 
 DEFAULT_SERVER_CONFIG = {
-    'project:releng:signing:cert:dep-signing': [
-        [
-            'http://localhost:5500',
-            'alice',
-            'abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmn',
-            ['autograph_mar384'],
-            'autograph'
-        ],
-        [
-            'http://localhost:5500',
-            'bob',
-            '1234567890abcdefghijklmnopqrstuvwxyz1234567890abcd',
-            ['autograph_apk'],
-            'autograph'
-        ],
-        [
-            'http://localhost:5500',
-            'alice',
-            'abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmn',
-            ['autograph_hash_only_mar384'],
-            'autograph'
-        ],
-    ]
+    'project:releng:signing:cert:dep-signing': {
+        'mar-signing': {
+            'urls': ['http://localhost:5500'],
+            'user': 'alice',
+            'pass': 'abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmn',
+            'formats': ['autograph_mar384'],
+            'server-type': 'autograph',
+            'priority': 1,
+        },
+        'mar-hash-signing': {
+            'urls': ['http://localhost:5500'],
+            'user': 'alice',
+            'pass': 'abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmn',
+            'formats': ['autograph_hash_only_mar384'],
+            'server-type': 'autograph',
+            'priority': 1,
+        },
+        'apk-signing': {
+            'urls': ['http://localhost:5500'],
+            'user': 'bob',
+            'pass': '1234567890abcdefghijklmnopqrstuvwxyz1234567890abcd',
+            'formats': ['autograph_apk'],
+            'server-type': 'autograph',
+            'priority': 1,
+        },
+    }
 }
 
 
@@ -112,7 +115,7 @@ def _copy_files_to_work_dir(file_name, context):
 
 
 def _write_server_config(tmpdir):
-    server_config_path = os.path.join(tmpdir, 'server_config.json')
+    server_config_path = os.path.join(tmpdir, 'server_config.yaml')
     with open(server_config_path, mode='w') as f:
         json.dump(DEFAULT_SERVER_CONFIG, f)
 
