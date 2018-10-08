@@ -362,7 +362,7 @@ async def test_sign_mar384_with_autograph_hash(context, mocker, to, expected):
     }
     context.signing_servers = {
         "project:releng:signing:cert:dep-signing": [
-            utils.SigningServer(*["https://autograph-hsm.dev.mozaws.net", "alice", "fs5wgcer9qj819kfptdlp8gm227ewxnzvsuj9ztycsx08hfhzu", ["autograph_hash_only_mar384"], "autograph"])
+            utils.SigningServer(*["https://autograph-hsm.dev.mozaws.net", "alice", "fs5wgcer9qj819kfptdlp8gm227ewxnzvsuj9ztycsx08hfhzu", ["autograph_hash_only_mar384"], "autograph"], 1)
         ]
     }
     assert await sign.sign_mar384_with_autograph_hash(context, 'from', 'autograph_hash_only_mar384', to=to) == expected
@@ -439,7 +439,7 @@ async def test_sign_mar384_with_autograph_hash_returns_invalid_signature_length(
     }
     context.signing_servers = {
         "project:releng:signing:cert:dep-signing": [
-            utils.SigningServer(*["https://autograph-hsm.dev.mozaws.net", "alice", "fs5wgcer9qj819kfptdlp8gm227ewxnzvsuj9ztycsx08hfhzu", ["autograph_hash_only_mar384"], "autograph"])
+            utils.SigningServer(*["https://autograph-hsm.dev.mozaws.net", "alice", "fs5wgcer9qj819kfptdlp8gm227ewxnzvsuj9ztycsx08hfhzu", ["autograph_hash_only_mar384"], "autograph", 1])
         ]
     }
     with pytest.raises(SigningScriptError):
