@@ -431,6 +431,7 @@ async def test_sign_jar(context, mocker):
     async def fake_zipalign(*args):
         counter.append('1')
 
+    mocker.patch.object(sign, 'strip_apk_meta_inf', new=noop_async)
     mocker.patch.object(sign, 'sign_file', new=noop_async)
     mocker.patch.object(sign, 'zip_align_apk', new=fake_zipalign)
     await sign.sign_jar(context, 'from', 'blah')
@@ -635,6 +636,49 @@ def test_remove_extra_files(context):
         assert not os.path.exists(path)
     for f in good:
         assert os.path.exists(os.path.join(work_dir, f))
+
+
+# strip_apk_meta_inf {{{1
+@pytest.mark.asyncio
+@pytest.mark.parametrize('zip_files,should_strip,is_verbose,', ((
+    ['foo.txt'], False, True,
+), (
+    ['foo.txt'], False, False,
+), (
+    ['META-INF/blah.kotlin'], True, True,
+), (
+    ['META-INF/blah.kotlin'], True, False,
+), (
+    ['META-inf/sig.rsa'], True, True,
+), (
+    ['META-inf/sig.rsa'], True, False,
+)))
+async def test_strip_apk_meta_inf(context, mocker, monkeypatch, zip_files, should_strip, is_verbose):
+    context.config['zip'] = '/path/to/zip'
+    context.config['verbose'] = is_verbose
+    abs_to = '/absolute/path/to/apk.apk'
+
+    async def fake_filelist(*args, **kwargs):
+        return zip_files
+
+    async def execute_subprocess_mock(command):
+        assert should_strip
+        if is_verbose:
+            assert command == ['/path/to/zip', '-v', '-d', abs_to, "'META-INF/*'"]
+            assert len(command) == 5
+        else:
+            assert command == ['/path/to/zip', '-d', abs_to, "'META-INF/*'"]
+            assert len(command) == 4
+
+    def shutil_mock(_, destination):
+        assert destination == abs_to
+
+    mocker.patch.object(sign, '_get_zipfile_files', new=fake_filelist)
+
+    monkeypatch.setattr('signingscript.utils.execute_subprocess', execute_subprocess_mock)
+    monkeypatch.setattr('shutil.move', shutil_mock)
+
+    await sign.strip_apk_meta_inf(context, abs_to)
 
 
 # zip_align_apk {{{1

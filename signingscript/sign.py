@@ -185,6 +185,7 @@ async def sign_jar(context, from_, fmt):
         str: the path to the signed file
 
     """
+    await strip_apk_meta_inf(context, from_)
     await sign_file(context, from_, fmt)
     await zip_align_apk(context, from_)
     return from_
@@ -504,6 +505,37 @@ def remove_extra_files(top_dir, file_list):
             log.warning("Extra file to clean up: {}".format(f))
             rm(f)
     return extra_files
+
+
+# strip_apk_meta_inf {{{1
+async def strip_apk_meta_inf(context, abs_to):
+    """Strip all files from an APK's META-INF/ directory in-place.
+
+    To reduce APK size and not confuse people that look into the APK.
+
+    Args:
+        context (Context): the signing context
+        abs_to (str): the absolute path to the apk
+
+    Raises:
+        FailedSubprocess: on subprocess error when deleting.
+
+    Returns:
+        None: since it operates in-place
+
+    """
+    all_files = await _get_zipfile_files(abs_to)
+    if not any(filename.upper().startswith('META-INF') for filename in all_files):
+        log.info("No META-INF/ files found in APK {}".format(abs_to))
+    else:
+        log.info("stripping META-INF/ from APK {}".format(abs_to))
+        zip_executable_location = context.config['zip']
+        zip_command = [zip_executable_location]
+        if context.config['verbose'] is True:
+            zip_command += ['-v']
+
+        zip_command += ["-d", abs_to, "'META-INF/*'"]
+        await utils.execute_subprocess(zip_command)
 
 
 # zip_align_apk {{{1

@@ -64,7 +64,8 @@ DEFAULT_CONFIG = {
     "verbose": True,
     "dmg": "dmg",
     "hfsplus": "hfsplus",
-    "zipalign": "zipalign"
+    "zipalign": "zipalign",
+    "zip": "zip"
 }
 
 
