@@ -176,7 +176,7 @@ def is_apk_autograph_signing_format(format_):
         format_ (str): the format to check
 
     """
-    return format_ and format_ in ('autograph_focus', 'autograph_fennec_sha1')
+    return format_ and format_.startswith('autograph_apk_'):
 
 
 def is_sha1_apk_autograph_signing_format(format_):
