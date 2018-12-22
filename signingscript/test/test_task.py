@@ -1,6 +1,7 @@
 import aiohttp
 import os
 import pytest
+import signingscript
 
 from scriptworker.client import validate_task_schema
 from scriptworker.context import Context
@@ -21,7 +22,6 @@ SERVER_CONFIG_PATH = os.path.join(BASE_DIR, 'example_server_config.json')
 DEFAULT_SCOPE_PREFIX = "project:releng:signing:"
 TEST_CERT_TYPE = "{}cert:dep-signing".format(DEFAULT_SCOPE_PREFIX)
 TEST_AUTOGRAPH_TYPE = "{}autograph:dep-signing".format(DEFAULT_SCOPE_PREFIX)
-
 
 
 @pytest.fixture(scope='function')
@@ -47,6 +47,11 @@ def task_defn():
           }]
         }
     }
+
+
+@pytest.fixture(scope='function')
+def schema():
+    return os.path.join(os.path.dirname(signingscript.__file__), 'data/signing_task_schema.json')
 
 
 # task_cert_type {{{1
@@ -134,17 +139,15 @@ def test_task_signing_formats_errors_when_2_different_projects_are_signed_in_the
 
 
 # validate_task_schema {{{1
-def test_missing_mandatory_urls_are_reported(context, task_defn):
-    context.task = task_defn
-    del(context.task['scopes'])
+def test_missing_mandatory_urls_are_reported(task_defn, schema):
+    del(task_defn['scopes'])
 
     with pytest.raises(ScriptWorkerTaskException):
-        validate_task_schema(context)
+        validate_task_schema(task=task_defn, schema=schema)
 
 
-def test_no_error_is_reported_when_no_missing_url(context, task_defn):
-    context.task = task_defn
-    validate_task_schema(context)
+def test_no_error_is_reported_when_no_missing_url(task_defn, schema):
+    validate_task_schema(task=task_defn, schema=schema)
 
 
 # get_token {{{1
