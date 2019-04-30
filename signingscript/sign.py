@@ -718,22 +718,22 @@ async def call_autograph(url, user, password, request_json):
 def make_signing_req(input_bytes, server, fmt, keyid=None):
     """Make a signing request object to pass to autograph."""
     base64_input = base64.b64encode(input_bytes).decode('ascii')
-    sign_req = [{"input": base64_input}]
+    sign_req = {"input": base64_input}
 
     if keyid:
-        sign_req[0]['keyid'] = keyid
+        sign_req['keyid'] = keyid
 
     # TODO: Is this the right place to do this?
     if utils.is_apk_autograph_signing_format(fmt):
         # We don't want APKs to have their compression changed
-        sign_req[0]['options'] = {'zip': 'passthrough'}
+        sign_req['options'] = {'zip': 'passthrough'}
 
         if utils.is_sha1_apk_autograph_signing_format(fmt):
             # We ask for a SHA1 digest from Autograph
             # https://github.com/mozilla-services/autograph/pull/166/files
-            sign_req[0]['options']['pkcs7_digest'] = "SHA1"
+            sign_req['options']['pkcs7_digest'] = "SHA1"
 
-    return sign_req
+    return [sign_req]
 
 
 async def sign_with_autograph(server, input_bytes, fmt, autograph_method, keyid=None):
