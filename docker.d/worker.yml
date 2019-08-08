@@ -24,5 +24,3 @@ hfsplus: { "$eval": "HFSPLUS_PATH" }
 zipalign: { "$eval": "ZIPALIGN_PATH" }
 gpg_pubkey: { "$eval": "GPG_PUBKEY_PATH" }
 widevine_cert: { "$eval": "WIDEVINE_CERT_PATH" }
-datadog_port: { "$eval": "DATADOG_PORT" }
-datadog_host: { "$eval": "DATADOG_HOST" }
