@@ -3,7 +3,7 @@ policy:
   pullRequests: public
 tasks:
   $let:
-    project_name: 'tree'
+    project_name: 'signing'
     python_version: 'py37'
 
     head_rev:
