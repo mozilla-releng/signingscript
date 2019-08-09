@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# 
+#
 # Check that all required variables exist
 #
 test $CONFIG_DIR
@@ -10,10 +10,9 @@ test $GPG_PUBKEY
 test $PROJECT_NAME
 test $PUBLIC_IP
 
-# TODO: where do we get this script??
-#export DMG_PATH=...
-#export HFSPLUS_PATH=...
-#export ZIPALIGN_PATH=...
+export DMG_PATH=/app/bin/dmg
+export HFSPLUS_PATH=/app/bin/hfsplus
+export ZIPALIGN_PATH=/usr/bin/zipalign
 
 export PASSWORDS_PATH=$CONFIG_DIR/passwords.json
 export SIGNTOOL_PATH="/app/bin/signtool"

@@ -15,6 +15,9 @@ COPY . /app
 RUN python -m venv /app \
  && ./bin/pip install -r requirements/base.txt \
  && ./bin/pip install -e . \
- && ./bin/pip install https://github.com/rail/configloader/archive/d0336ed42f364ae5da749851d855ada1d6ff9951.tar.gz
+ && ./bin/pip install https://github.com/rail/configloader/archive/d0336ed42f364ae5da749851d855ada1d6ff9951.tar.gz \
+ && wget -O ./bin/dmg https://github.com/mozilla-releng/build-puppet/raw/master/modules/signing_scriptworker/files/dmg/dmg \
+ && wget -O ./bin/hfsplus https://github.com/mozilla-releng/build-puppet/raw/master/modules/signing_scriptworker/files/dmg/hfsplus \
+ && chmod 755 ./bin/dmg ./bin/hfsplus
 
 CMD ["/app/docker.d/init.sh"]
