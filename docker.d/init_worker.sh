@@ -10,8 +10,8 @@ test $GPG_PUBKEY
 test $PROJECT_NAME
 test $PUBLIC_IP
 
-export DMG_PATH=/app/bin/dmg
-export HFSPLUS_PATH=/app/bin/hfsplus
+export DMG_PATH=/app/files/dmg
+export HFSPLUS_PATH=/app/files/hfsplus
 export ZIPALIGN_PATH=/usr/bin/zipalign
 
 export PASSWORDS_PATH=$CONFIG_DIR/passwords.json
