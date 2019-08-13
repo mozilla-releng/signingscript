@@ -41,7 +41,7 @@ case $COT_PRODUCT in
     ;;
 esac
 
-case $ENV in 
+case $ENV in
   dev)
     test $AUTOGRAPH_FENNEC_PASSWORD
     test $AUTOGRAPH_FENNEC_USERNAME
