@@ -14,7 +14,7 @@ from unittest.mock import MagicMock
 
 # helper constants, fixtures, functions {{{1
 EXAMPLE_CONFIG = os.path.join(BASE_DIR, "config_example.json")
-SSL_CERT = os.path.join(BASE_DIR, "signingscript", "data", "host.cert")
+SSL_CERT = os.path.join(BASE_DIR, "src", "signingscript", "data", "host.cert")
 
 
 # async_main {{{1
