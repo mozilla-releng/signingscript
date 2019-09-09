@@ -1,24 +1,16 @@
-import json
 import mock
 import os
 import pytest
-import sys
 
 import scriptworker.client
 from scriptworker.context import Context
-from scriptworker.exceptions import ScriptWorkerTaskException
-from signingscript.test import (
+from conftest import (
     noop_async,
     noop_sync,
-    read_file,
-    tmpdir,
-    tmpfile,
     BASE_DIR,
 )
 import signingscript.script as script
 from unittest.mock import MagicMock
-
-assert tmpdir  # silence flake8
 
 # helper constants, fixtures, functions {{{1
 EXAMPLE_CONFIG = os.path.join(BASE_DIR, "config_example.json")
