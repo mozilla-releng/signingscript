@@ -21,9 +21,9 @@ aiohttp==3.6.0 \
     --hash=sha256:e0fe698d1e6a852a27a88d2844a1a63839ee764d7cf214fd58cbea480407cc1d \
     --hash=sha256:fa155e309cc2277d6f9d099aecaf3ce78d86a31f5a62a994debc872e4c34ddf4 \
     # via scriptworker, taskcluster
-arrow==0.15.0 \
-    --hash=sha256:704f5403299fe092c69479e0a2516a434003e82d37439a9e47c31285faf3947b \
-    --hash=sha256:9b92a8e151e168b742a36b622deadf860d1686af8c5bbe46eca8da04b10fe92f
+arrow==0.14.7 \
+    --hash=sha256:4bfacea734ead51495dc47df00421ecfd4ca1f2c0fbe58b9a26eaeddedc31caf \
+    --hash=sha256:67f8be7c0cf420424bc62d8d7dc40b44e4bb2f7b515f9cc2954fb36e35797656
 asn1crypto==0.24.0 \
     --hash=sha256:2f1adbb7546ed199e3c90ef23ec95c5cf3585bac7d11fb7eb562a3fe89c64e87 \
     --hash=sha256:9d5c20441baf0cb60a4ac34cc447c6c189024b6b4c6cd7877034f4965c464e49 \
