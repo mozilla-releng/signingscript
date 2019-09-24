@@ -31,6 +31,9 @@ case $ENV in
     ;;
   dev)
     export TRUST_LEVEL=1
+    if [ $PROJECT_NAME = "signing" ]; then
+        export TRUST_LEVEL=t
+    fi
     export WORKER_SUFFIX="-dev"
     ;;
   *)
@@ -88,6 +91,13 @@ export WORK_DIR=/app/workdir
 export WORKER_TYPE="${TRUST_DOMAIN}-${TRUST_LEVEL}-${PROJECT_NAME}${WORKER_SUFFIX}"
 export WORKER_GROUP=${WORKER_TYPE}
 export WORKER_ID_PREFIX="${WORKER_TYPE}-"
+export AUTHENTICODE_TIMESTAMP_STYLE=null
+export AUTHENTICODE_CERT_PATH=/app/src/signingscript/data/authenticode_dep.crt
+export AUTHENTICODE_CROSS_CERT_PATH=/app/src/signingscript/data/authenticode_stub.crt
+if [ "$ENV" == "prod" ]; then
+  export AUTHENTICODE_TIMESTAMP_STYLE=old
+  export AUTHENTICODE_CERT_PATH=/app/src/signingscript/data/authenticode_prod.crt
+fi
 
 #
 # ensure configuration folder exists we can write to it
