@@ -21,6 +21,13 @@ export SIGNTOOL_PATH="/app/bin/signtool"
 export SSL_CERT_PATH="/app/src/signingscript/data/host.cert"
 export GPG_PUBKEY_PATH=$CONFIG_DIR/gpg_pubkey
 export WIDEVINE_CERT_PATH=$CONFIG_DIR/widevine.crt
+export AUTHENTICODE_TIMESTAMP_STYLE=null
+export AUTHENTICODE_CERT_PATH=/app/src/signingscript/data/authenticode_dep.crt
+export AUTHENTICODE_CROSS_CERT_PATH=/app/src/signingscript/data/authenticode_stub.crt
+if [ "$ENV" == "prod" ]; then
+  export AUTHENTICODE_TIMESTAMP_STYLE=old
+  export AUTHENTICODE_CERT_PATH=/app/src/signingscript/data/authenticode_prod.crt
+fi
 
 echo $GPG_PUBKEY | base64 -d > $GPG_PUBKEY_PATH
 
