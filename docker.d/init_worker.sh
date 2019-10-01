@@ -7,7 +7,7 @@ test_var_set() {
   if [[ -z "${!varname}" ]]; then
     echo "error: ${varname} is not set"
     exit 1
-
+}
 
 #
 # Check that all required variables exist
