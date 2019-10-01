@@ -1,16 +1,24 @@
 #!/bin/bash
 set -e
 
+function check_var() {
+    varname=$1
+    if ! test "${!varname}"; then
+        echo "${varname}" not set
+        exit 1
+    fi
+}
+
 #
 # Check for certain variables which should be set
 #
-test $PROJECT_NAME
-test $ENV
-test $COT_PRODUCT
-test $TASKCLUSTER_CLIENT_ID
-test $TASKCLUSTER_ACCESS_TOKEN
+check_var PROJECT_NAME
+check_var ENV
+check_var COT_PRODUCT
+check_var TASKCLUSTER_CLIENT_ID
+check_var TASKCLUSTER_ACCESS_TOKEN
 if [ "$ENV" == "prod" ]; then
-  test $ED25519_PRIVKEY
+  check_var ED25519_PRIVKEY
 fi
 
 #
