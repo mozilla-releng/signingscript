@@ -1,16 +1,26 @@
 #!/bin/bash
-set -e
+set -o errexit -o pipefail
+
+
+test_var_set() {
+  local varname=$1
+
+  if [[ -z "${!varname}" ]]; then
+    echo "error: ${varname} is not set"
+    exit 1
+  fi
+}
 
 #
 # Check for certain variables which should be set
 #
-test $PROJECT_NAME
-test $ENV
-test $COT_PRODUCT
-test $TASKCLUSTER_CLIENT_ID
-test $TASKCLUSTER_ACCESS_TOKEN
+test_var_set 'PROJECT_NAME'
+test_var_set 'ENV'
+test_var_set 'COT_PRODUCT'
+test_var_set 'TASKCLUSTER_CLIENT_ID'
+test_var_set 'TASKCLUSTER_ACCESS_TOKEN'
 if [ "$ENV" == "prod" ]; then
-  test $ED25519_PRIVKEY
+  test_var_set 'ED25519_PRIVKEY'
 fi
 
 #
@@ -31,6 +41,9 @@ case $ENV in
     ;;
   dev)
     export TRUST_LEVEL=1
+    if [ $PROJECT_NAME = "signing" ]; then
+        export TRUST_LEVEL=t
+    fi
     export WORKER_SUFFIX="-dev"
     ;;
   *)
@@ -93,7 +106,7 @@ export WORKER_ID_PREFIX="${WORKER_TYPE}-"
 # ensure configuration folder exists we can write to it
 #
 mkdir -p -m 700 $CONFIG_DIR
-echo $ED25519_PRIVKEY | base64 -d > $ED25519_PRIVKEY_PATH
+echo $ED25519_PRIVKEY > $ED25519_PRIVKEY_PATH
 chmod 600 $ED25519_PRIVKEY_PATH
 
 #
