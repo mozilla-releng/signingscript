@@ -55,6 +55,7 @@ def context(tmpdir):
     context.config["artifact_dir"] = os.path.join(tmpdir, "artifact")
     context.config["taskcluster_scope_prefixes"] = [DEFAULT_SCOPE_PREFIX]
     context.signing_servers = load_signing_server_config(context)
+    context.task = {}
     mkdir(context.config["work_dir"])
     mkdir(context.config["artifact_dir"])
     yield context

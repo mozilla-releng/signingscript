@@ -1419,6 +1419,10 @@ async def sign_authenticode_file(context, orig_path, fmt):
         else:
             crosscert = None
 
+        comment = context.task.get("payload", {}).get("authenticode_comment")
+        if not comment:
+            comment = os.path.basename(orig_path)
+
         if not winsign.sign.sign_file(
             infile,
             outfile,
@@ -1426,6 +1430,7 @@ async def sign_authenticode_file(context, orig_path, fmt):
             certs,
             signer,
             url=url,
+            comment=comment,
             crosscert=crosscert,
             timestamp_style=timestamp_style,
         ):
