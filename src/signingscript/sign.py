@@ -445,6 +445,8 @@ async def sign_widevine_tar(context, orig_path, fmt):
     # speed over disk space.
     tmp_dir = tempfile.mkdtemp(prefix="wvtar", dir=context.config["work_dir"])
     # Get file list
+    # TODO: This ends up decompressing the data twice
+    # TODO: Also doesn't properly ignore directories, so we end up decompressing the data needlessly
     all_files = await _get_tarfile_files(orig_path, compression)
     files_to_sign = _get_widevine_signing_files(all_files)
     is_autograph = utils.is_autograph_signing_format(fmt)
@@ -1080,6 +1082,8 @@ async def sign_file_with_autograph(context, from_, fmt, to=None, extension_id=No
     return to
 
 
+#TODO: Log file sizes
+#TODO: Log how long it takes to do stuff
 async def sign_gpg_with_autograph(context, from_, fmt):
     """Signs file with autograph and writes the results to a file.
 
