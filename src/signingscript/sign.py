@@ -113,7 +113,7 @@ def time_async_function(f):
             return await f(*args, **kwargs)
         finally:
             rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-            log.debug("%s took %.2fs; rss:%s", f.__name__, time.time() - start, rss)
+            log.debug("%s took %.2fs; RSS:%s", f.__name__, time.time() - start, rss)
 
     return wrapped
 
@@ -127,7 +127,8 @@ def time_function(f):
         try:
             return f(*args, **kwargs)
         finally:
-            log.debug("%s took %.2fs", f, time.time() - start)
+            rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+            log.debug("%s took %.2fs; RSS:%s", f.__name__, time.time() - start, rss)
 
     return wrapped
 
