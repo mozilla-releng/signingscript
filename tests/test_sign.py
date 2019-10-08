@@ -1498,6 +1498,7 @@ async def test_authenticode_sign_single_file(tmpdir, mocker, context):
     )
     context.config["authenticode_url"] = "https://example.com"
     context.config["authenticode_timestamp_style"] = None
+    context.task["payload"] = {"authenticode_comment": "comment"}
 
     await sign._extract_zipfile(
         context, os.path.join(TEST_DATA_DIR, "windows.zip"), tmp_dir=tmpdir
