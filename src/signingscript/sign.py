@@ -111,7 +111,8 @@ def time_async_function(f):
         try:
             return await f(*args, **kwargs)
         finally:
-            log.debug("%s took %.2fs", f, time.time() - start)
+            rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+            log.debug("%s took %.2fs; rss:%s", f.__name__, time.time() - start, rss)
 
     return wrapped
 
@@ -981,12 +982,43 @@ async def _create_tarfile(context, to, files, compression, tmp_dir=None):
         raise SigningScriptError(e)
 
 
+def write_signing_req_to_disk(fp, signing_req):
+    """Write signing_req to fp.
+
+    Does proper base64 and json encoding.
+    Tries not to hold onto a lot of memory.
+    """
+    fp.write(b"[{")
+    for k, v in signing_req.items():
+        fp.write(json.dumps(k).encode("utf8"))
+        fp.write(b":")
+        if hasattr(v, "read"):
+            fp.write(b"\"")
+            while True:
+                block = v.read(1020)
+                if not block:
+                    break
+                e = b64encode(block).encode("utf8")
+                fp.write(e)
+            fp.write(b"\"")
+        else:
+            fp.write(json.dumps(v).encode("utf8"))
+        fp.write(b",")
+    fp.seek(-1, 1)
+    fp.write(b"}]")
+
+
 @time_async_function
 async def call_autograph(session, url, user, password, signing_req):
     """Call autograph and return the json response."""
     if hasattr(signing_req['input'], 'read'):
-        signing_req['input'] = b64encode(signing_req['input'].read())
-    request_json = json.dumps([signing_req], separators=",:")
+        request_json_file = tempfile.TemporaryFile("w+b")
+        write_signing_req_to_disk(request_json_file, signing_req)
+        request_json_file.seek(0)
+        request_json = request_json_file.read()
+    else:
+        request_json = json.dumps([signing_req], separators=",:")
+
     content_type = "application/json"
     auth_header = mohawk.Sender(
         {"id": user, "key": password, "algorithm": "sha256"},
@@ -995,6 +1027,7 @@ async def call_autograph(session, url, user, password, signing_req):
         content=request_json,
         content_type=content_type,
     ).request_header
+
     log.debug("Calling autograph %s", url)
     resp = await session.post(
         url,
