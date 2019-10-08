@@ -982,8 +982,11 @@ async def _create_tarfile(context, to, files, compression, tmp_dir=None):
 
 
 @time_async_function
-async def call_autograph(session, url, user, password, request_json):
+async def call_autograph(session, url, user, password, signing_req):
     """Call autograph and return the json response."""
+    if hasattr(signing_req['input'], 'read'):
+        signing_req['input'] = b64encode(signing_req['input'].read())
+    request_json = json.dumps([signing_req], separators=",:")
     content_type = "application/json"
     auth_header = mohawk.Sender(
         {"id": user, "key": password, "algorithm": "sha256"},
@@ -1009,12 +1012,9 @@ def b64encode(input_bytes):
 
 
 @time_function
-def make_signing_req(input_bytes_b64, fmt, keyid=None, extension_id=None):
+def make_signing_req(input_, fmt, keyid=None, extension_id=None):
     """Make a signing request object to pass to autograph."""
-    if hasattr(input_bytes_b64, "read"):
-        sign_req = {"input": b64encode(input_bytes_b64.read())}
-    else:
-        sign_req = {"input": input_bytes_b64}
+    sign_req = {"input": input_}
 
     if keyid:
         sign_req["keyid"] = keyid
@@ -1036,14 +1036,14 @@ def make_signing_req(input_bytes_b64, fmt, keyid=None, extension_id=None):
         sign_req["options"]["cose_algorithms"] = ["ES256"]
         sign_req["options"]["pkcs7_digest"] = "SHA256"
 
-    return [sign_req]
+    return sign_req
 
 
 @time_async_function
 async def sign_with_autograph(
     session,
     server,
-    input_bytes_b64,
+    input_,
     fmt,
     autograph_method,
     keyid=None,
@@ -1054,7 +1054,7 @@ async def sign_with_autograph(
     Args:
         session (aiohttp.ClientSession): client session object
         server (url): the server to connect to sign
-        input_bytes_b64 (bytes): the source data to sign, base64 encoded
+        input_ (bytes or file object): the source data to sign, base64 encoded
         fmt (str): the format to sign with
         autograph_method (str): which autograph method to use to sign. must be
                                 one of 'file', 'hash', or 'data'
@@ -1072,8 +1072,7 @@ async def sign_with_autograph(
     if autograph_method not in {"file", "hash", "data"}:
         raise SigningScriptError(f"Unsupported autograph method: {autograph_method}")
 
-    sign_req = make_signing_req(input_bytes_b64, fmt, keyid, extension_id)
-    sign_req = json.dumps(sign_req, separators=",:")
+    sign_req = make_signing_req(input_, fmt, keyid, extension_id)
 
     rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     log.debug(

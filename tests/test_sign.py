@@ -1029,40 +1029,31 @@ async def test_tarfile_append_write(context):
 def test_signreq_task_keyid():
     input_bytes = b"hello world"
     fmt = "autograph_hash_only_mar384"
-    s = SigningServer(
-        "https://autograph-hsm.dev.mozaws.net", "alice", "bob", [fmt], "autograph"
-    )
     req = sign.make_signing_req(sign.b64encode(input_bytes), fmt, "newkeyid")
 
-    assert req[0]["keyid"] == "newkeyid"
-    assert req[0]["input"] == "aGVsbG8gd29ybGQ="
+    assert req["keyid"] == "newkeyid"
+    assert req["input"] == "aGVsbG8gd29ybGQ="
 
 
 def test_signreq_task_omnija():
     input_bytes = b"hello world"
     fmt = "autograph_omnija"
-    s = SigningServer(
-        "https://autograph-hsm.dev.mozaws.net", "alice", "bob", [fmt], "autograph"
-    )
     req = sign.make_signing_req(
         sign.b64encode(input_bytes), fmt, "newkeyid", extension_id="omni.ja@mozilla.org"
     )
 
-    assert req[0]["keyid"] == "newkeyid"
-    assert req[0]["input"] == "aGVsbG8gd29ybGQ="
-    assert req[0]["options"]["id"] == "omni.ja@mozilla.org"
-    assert isinstance(req[0]["options"]["cose_algorithms"], type([]))
-    assert len(req[0]["options"]["cose_algorithms"]) == 1
-    assert req[0]["options"]["cose_algorithms"][0] == "ES256"
-    assert req[0]["options"]["pkcs7_digest"] == "SHA256"
+    assert req["keyid"] == "newkeyid"
+    assert req["input"] == "aGVsbG8gd29ybGQ="
+    assert req["options"]["id"] == "omni.ja@mozilla.org"
+    assert isinstance(req["options"]["cose_algorithms"], type([]))
+    assert len(req["options"]["cose_algorithms"]) == 1
+    assert req["options"]["cose_algorithms"][0] == "ES256"
+    assert req["options"]["pkcs7_digest"] == "SHA256"
 
 
 def test_signreq_task_langpack():
     input_bytes = b"hello world"
     fmt = "autograph_langpack"
-    s = SigningServer(
-        "https://autograph-hsm.dev.mozaws.net", "alice", "bob", [fmt], "autograph"
-    )
     req = sign.make_signing_req(
         sign.b64encode(input_bytes),
         fmt,
@@ -1070,13 +1061,13 @@ def test_signreq_task_langpack():
         extension_id="langpack-en-CA@firefox.mozilla.org",
     )
 
-    assert req[0]["keyid"] == "newkeyid"
-    assert req[0]["input"] == "aGVsbG8gd29ybGQ="
-    assert req[0]["options"]["id"] == "langpack-en-CA@firefox.mozilla.org"
-    assert isinstance(req[0]["options"]["cose_algorithms"], type([]))
-    assert len(req[0]["options"]["cose_algorithms"]) == 1
-    assert req[0]["options"]["cose_algorithms"][0] == "ES256"
-    assert req[0]["options"]["pkcs7_digest"] == "SHA256"
+    assert req["keyid"] == "newkeyid"
+    assert req["input"] == "aGVsbG8gd29ybGQ="
+    assert req["options"]["id"] == "langpack-en-CA@firefox.mozilla.org"
+    assert isinstance(req["options"]["cose_algorithms"], type([]))
+    assert len(req["options"]["cose_algorithms"]) == 1
+    assert req["options"]["cose_algorithms"][0] == "ES256"
+    assert req["options"]["pkcs7_digest"] == "SHA256"
 
 
 @pytest.mark.asyncio
