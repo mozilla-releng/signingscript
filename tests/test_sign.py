@@ -283,7 +283,9 @@ async def test_sign_file_with_autograph(context, mocker, to, expected, format, o
         headers=mocker.ANY,
         data=mocker.ANY,
     )
-    assert json.loads(mocked_session.post.call_args[1]["data"]) == [kwargs]
+    data = mocked_session.post.call_args[1]["data"]
+    data.seek(0)
+    assert json.load(data) == [kwargs]
 
 
 @pytest.mark.asyncio

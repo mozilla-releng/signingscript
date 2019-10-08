@@ -11,6 +11,7 @@ import os
 import re
 import resource
 import time
+import hashlib
 
 import shutil
 import subprocess
@@ -993,14 +994,14 @@ def write_signing_req_to_disk(fp, signing_req):
         fp.write(json.dumps(k).encode("utf8"))
         fp.write(b":")
         if hasattr(v, "read"):
-            fp.write(b"\"")
+            fp.write(b'"')
             while True:
                 block = v.read(1020)
                 if not block:
                     break
                 e = b64encode(block).encode("utf8")
                 fp.write(e)
-            fp.write(b"\"")
+            fp.write(b'"')
         else:
             fp.write(json.dumps(v).encode("utf8"))
         fp.write(b",")
@@ -1011,24 +1012,50 @@ def write_signing_req_to_disk(fp, signing_req):
 @time_async_function
 async def call_autograph(session, url, user, password, signing_req):
     """Call autograph and return the json response."""
-    if hasattr(signing_req['input'], 'read'):
-        request_json_file = tempfile.TemporaryFile("w+b")
-        write_signing_req_to_disk(request_json_file, signing_req)
-        request_json_file.seek(0)
-        request_json = request_json_file.read()
+    content_type = "application/json"
+
+    if hasattr(signing_req["input"], "read"):
+        request_json = tempfile.TemporaryFile("w+b")
+        write_signing_req_to_disk(request_json, signing_req)
+        request_json.seek(0)
+        r = mohawk.base.Resource(
+            credentials={"id": user, "key": password, "algorithm": "sha256"},
+            url=url,
+            method="POST",
+            content_type=content_type,
+        )
+        h = hashlib.new("sha256")
+        h.update(b"hawk.1.payload\n")
+        h.update(content_type.encode("utf8"))
+        h.update(b"\n")
+        req_size = 0
+        while True:
+            block = request_json.read(1024)
+            if not block:
+                break
+            req_size += len(block)
+            h.update(block)
+        h.update(b"\n")
+        r._content_hash = b64encode(h.digest())
+        request_json.seek(0)
+        mac = mohawk.util.calculate_mac("header", r, r.content_hash)
+        a = mohawk.base.HawkAuthority()
+        auth_header = a._make_header(r, mac)
     else:
         request_json = json.dumps([signing_req], separators=",:")
+        auth_header = mohawk.Sender(
+            {"id": user, "key": password, "algorithm": "sha256"},
+            url,
+            "POST",
+            content=request_json,
+            content_type=content_type,
+        ).request_header
+        req_size = len(request_json)
 
-    content_type = "application/json"
-    auth_header = mohawk.Sender(
-        {"id": user, "key": password, "algorithm": "sha256"},
-        url,
-        "POST",
-        content=request_json,
-        content_type=content_type,
-    ).request_header
+    rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
 
-    log.debug("Calling autograph %s", url)
+    log.debug("signing %d bytes of data with %s; RSS:%s", req_size, url, rss)
+
     resp = await session.post(
         url,
         data=request_json,
@@ -1074,13 +1101,7 @@ def make_signing_req(input_, fmt, keyid=None, extension_id=None):
 
 @time_async_function
 async def sign_with_autograph(
-    session,
-    server,
-    input_,
-    fmt,
-    autograph_method,
-    keyid=None,
-    extension_id=None,
+    session, server, input_, fmt, autograph_method, keyid=None, extension_id=None
 ):
     """Signs data with autograph and returns the result.
 
@@ -1106,15 +1127,6 @@ async def sign_with_autograph(
         raise SigningScriptError(f"Unsupported autograph method: {autograph_method}")
 
     sign_req = make_signing_req(input_, fmt, keyid, extension_id)
-
-    rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    log.debug(
-        "signing %d bytes of data with format %s with %s; RSS:%s",
-        len(sign_req),
-        fmt,
-        autograph_method,
-        rss,
-    )
 
     url = f"{server.server}/sign/{autograph_method}"
 
